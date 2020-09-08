@@ -10,6 +10,7 @@ class CPU:
         self.ram = [0] * 256
         self.reg = [0] * 8
         self.pc = 0
+        self.sp = 7
         self.running = True
 
     def ram_read(self, address):
@@ -31,7 +32,7 @@ class CPU:
             with open(sys.argv[1]) as file:
                 for line in file:
                     split_line = line.split("#")
-                    value = split_line[0].strip()
+                    value = split_line[0].strip() 
 
                     if value == "":
                         continue 
@@ -87,6 +88,21 @@ class CPU:
         print(value)
         self.pc += 2
 
+    def PUSH(self):
+        self.reg[self.sp] -= 1
+        register = self.ram_read(self.pc + 1)
+        value = self.reg[register]
+        address = self.reg[self.sp]
+        self.ram_write(address, value)
+        self.pc += 2
+
+    def POP(self):
+        value = self.ram_read(self.reg[self.sp])
+        self.reg[self.sp] += 1
+        register = self.ram_read(self.pc + 1)
+        self.reg[register] = value
+        self.pc += 2
+
     def MUL(self):
         op_a = self.ram_read(self.pc + 1)
         op_b = self.ram_read(self.pc + 2)
@@ -108,6 +124,10 @@ class CPU:
                 self.PRN()
             elif instruction == 0b00000001: #HLT
                 self.HLT()
+            elif instruction == 0b01000101: #PUSH
+                self.PUSH()
+            elif instruction == 0b01000110: #POP
+                self.POP()
             elif instruction == 0b10100010: #MUL
                 self.MUL()
             else:
