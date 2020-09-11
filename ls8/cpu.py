@@ -89,19 +89,35 @@ class CPU:
         self.pc += 2
 
     def PUSH(self):
-        self.reg[self.sp] -= 1
         register = self.ram_read(self.pc + 1)
         value = self.reg[register]
         address = self.reg[self.sp]
         self.ram_write(address, value)
+        self.reg[self.sp] -= 1
         self.pc += 2
 
     def POP(self):
         value = self.ram_read(self.reg[self.sp])
-        self.reg[self.sp] += 1
         register = self.ram_read(self.pc + 1)
         self.reg[register] = value
+        self.reg[self.sp] += 1
         self.pc += 2
+
+    def CALL(self):
+        return_address = self.pc + 2
+        self.reg[6] -= 1
+        self.ram[self.reg[6]] = return_address
+        self.pc = self.reg[self.ram_read(self.pc + 1)]
+
+    def RET(self):
+        self.pc = self.reg[self.sp]
+        self.reg[self.sp] += 1
+
+    def ADD(self):
+        op_a = self.ram_read(self.pc + 1)
+        op_b = self.ram_read(self.pc + 2)
+        self.alu("ADD", op_a, op_b)
+        self.pc += 3
 
     def MUL(self):
         op_a = self.ram_read(self.pc + 1)
@@ -130,6 +146,12 @@ class CPU:
                 self.POP()
             elif instruction == 0b10100010: #MUL
                 self.MUL()
+            elif instruction == 0b10100000:
+                self.ADD()
+            elif instruction == 0b01010000:
+                self.CALL()
+            elif instruction == 0b00010001:
+                self.RET()
             else:
                 print(f"Bad input: {instruction}")
                 sys.exit(1)
